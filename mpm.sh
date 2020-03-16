@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # needs java
-command -v java &>/dev/null || echo "please install java" && exit 1
+command -v java &>/dev/null || {
+    echo "please install java"
+    exit 1
+}
 
 # allow setting custom repos
 if ! [ -e ~/.mpmrc ]; then
@@ -26,12 +29,15 @@ getmpm() {
 
 # download spigot jar
 spigotdl() {
-    [ -e spigot.jar ] || echo "spigot already existing" && return
+    [ -e spigot.jar ] && {
+        echo "spigot already existing"
+        return
+    }
     export MC=${1:-$MC}
     echo "downloading minecraft version $MC"
     wget -q "$RAW/spigot/$MC/spigot.jar"
     [ -e server-icon.png ] || wget -O server-icon.png -q "$RAW/paperbenni64.png"
-    cat eula.txt || echo "eula=true" >eula.txt #accept eula
+    [ -e eula.txt ] || echo "eula=true" >eula.txt
     getmpm bukkit.yml
     getmpm paper.yml
     getmpm spigot.yml
@@ -58,7 +64,13 @@ pjava() {
 
 # is there a valid spigot installation
 checkspigot() {
-    [ -e plugins ] && [ -e eula.txt ] && return 0
+    {
+        {
+            [ -e plugins ] && [ -e eula.txt ]
+        } || {
+            [ -e ../plugins ] && [ -e ../eula.txt ]
+        }
+    } && return 0
     return 1
 }
 
@@ -120,7 +132,7 @@ dlplugin() {
     fi
 
     # execute from either plugins or spigot dir
-    if ! [ "${PWD#**/}" = "plugins" ]; then
+    if ! [ "${PWD##*/}" = "plugins" ]; then
         NOCD="set"
         [ -e plugins ] || mkdir plugins
         cd plugins
@@ -129,7 +141,7 @@ dlplugin() {
     [ -e "$1".jar ] && echo "plugin already existing" && return
 
     curl -s "$RAW/plugins/$1/$MC/$1.mpm" >"$1.mpm"
-    if ! grep -q 'describe: ' "$1.mpm"; then
+    if ! grep -q '^describe:' "$1.mpm"; then
         rm $1.mpm
         echo "$1 is not a valid plugin"
         return 1
@@ -138,16 +150,7 @@ dlplugin() {
     # download actual plugin
     wget -q "$RAW/plugins/$1/$MC/$1.jar"
     # commit needed for updating
-    echo commit: $(lastcommit "$RAW/plugins/$1/$MC/$1.jar") >>$1.mpm
-
-    if grep -q 'depend' "$1.mpm"; then
-        echo "installing plugin $1 dependencies"
-        DPENDENCIES="$(grep 'depend' $1.mpm)"
-        for i in "$DPENDENCIES"; do
-            dlplugin "${i#**:}"
-        done
-    fi
-
+    echo commit: $(lastcommit "plugins/$1/$MC/$1.jar") >>$1.mpm
     # some plugins execute shell scripts after installing
     if grep -q 'hook' <"$1.mpm"; then
         pushd .
@@ -157,8 +160,17 @@ dlplugin() {
         popd
     fi
 
+    if grep -q 'depend' "$1.mpm"; then
+        echo "installing plugin $1 dependencies"
+        DPENDENCIES="$(grep 'depend' $1.mpm)"
+        for i in "$DPENDENCIES"; do
+            dlplugin "${i#**:}"
+        done
+    fi
+
     if [ -n "$NOCD" ]; then
         cd ..
+        unset NOCD
     fi
 }
 
@@ -259,13 +271,13 @@ else
 fi
 
 case "$ACTION" in
-dl)
+plugin)
     dlplugin $@
     ;;
 spigot)
     spigotdl $@
     ;;
-exe)
+start)
     spigexe $@
     ;;
 op)
