@@ -79,10 +79,18 @@ spigexe() {
     esac
 }
 
+# establish a tcp tunnel
 spigotserveo() {
     nohup autossh -p 2222 -M 0 -R 25565:localhost:25565 paperbenni.mooo.com
 }
 
+# gets the hash of the last commit
+lastcommit() {
+    LINK='https://api.github.com/repos/paperbenni/mpm-repo/commits?path='"$(echo $1 | sed -s 's~/~%2F~g')"'&page=1&per_page=1'
+    curl -s "$LINK" | jq -r '.[0].commit.url' | grep -o '[^/]*$'
+}
+
+# download a plugin into the plugins folder
 dlplugin() {
     checkspigot || echo "warning: no spigot installation found"
     if [ -z "$@" ]; then
@@ -129,6 +137,8 @@ dlplugin() {
 
     # download actual plugin
     wget -q "$RAW/plugins/$1/$MC/$1.jar"
+    # commit needed for updating
+    echo commit: $(lastcommit "$RAW/plugins/$1/$MC/$1.jar") >>$1.mpm
 
     if grep -q 'depend' "$1.mpm"; then
         echo "installing plugin $1 dependencies"
@@ -150,4 +160,91 @@ dlplugin() {
     if [ -n "$NOCD" ]; then
         cd ..
     fi
+}
+
+# TODO: 
+
+# remove the last n lines from file
+rmlast() {
+    RMTIMES="${2:-1}"
+    for i in $(seq $RMTIMES); do
+        head -n -1 "$1" >tempfoo.txt
+        mv tempfoo.txt "$1"
+    done
+}
+
+# appends to previously set APPENDFILE
+app() {
+    if [ -z "$APPENDFILE" ]; then
+        echo "append to a \$APPENDFILE"
+        echo "usage: app string"
+        return 1
+    fi
+    if [ -e "$APPENDFILE" ]; then
+        echo "$1" >>"$APPENDFILE"
+    else
+        echo "file $APPENDFILE not found"
+    fi
+}
+
+
+#usage: mineuuid {playername}
+# returns the mojang uuid fromt the username
+mineuuid() {
+    if [ -z "$1" ]; then
+        echo 'Error: usage: mineuuid name [offline]'
+        return 1
+    fi
+    if [ -z "$2" ]; then
+        UUID_URL=https://api.mojang.com/users/profiles/minecraft/$1
+        mojang_output="$(wget -qO- $UUID_URL)"
+        rawUUID=${mojang_output:7:32}
+        UUID=${rawUUID:0:8}-${rawUUID:8:4}-${rawUUID:12:4}-${rawUUID:16:4}-${rawUUID:20:12}
+        echo $UUID
+    else
+        rawUUID=$(curl -s http://tools.glowingmines.eu/convertor/nick/"$1")
+        rawUUID2=${rawUUID#*teduuid\":\"}
+        UUID=${rawUUID2%\"*}
+        echo "$UUID"
+    fi
+}
+
+# ops the user $1
+# execute in the spigot folder
+mcop() {
+
+    [ -e ops.json ] && touch ops.json
+    [ -z "$1" ] && echo "usage: mcop username" && return
+
+    pb replace
+
+    if grep -q 'online-mode=true' <server.properties; then
+        UUID=$(mineuuid "$1")
+    else
+        UUID=$(mineuuid "$1" offline)
+    fi
+
+    if grep -q "$UUID" <ops.json; then
+        echo "already op"
+        return 0
+    fi
+
+    APPENDFILE=$(realpath ops.json)
+    if grep -q 'uuid' <ops.json; then
+        rmlast ops.json 3
+        app "  },"
+    else
+        rm ops.json
+        touch ops.json
+        app "["
+    fi
+
+    app "  {"
+    app "    \"uuid\": \"$UUID\", "
+    app "    \"name\": \"$1\", "
+    app "    \"level\": 4, "
+    app "    \"bypassesPlayerLimit\": false"
+    app "  }"
+    app "]"
+    app ""
 }
