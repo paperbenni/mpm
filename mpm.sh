@@ -82,3 +82,72 @@ spigexe() {
 spigotserveo() {
     nohup autossh -p 2222 -M 0 -R 25565:localhost:25565 paperbenni.mooo.com
 }
+
+dlplugin() {
+    checkspigot || echo "warning: no spigot installation found"
+    if [ -z "$@" ]; then
+        echo "usage: mpm pluginname"
+        return
+    fi
+
+    # loop through multiple plugin args
+    if [ -n "$2" ]; then
+        for i in "$@"; do
+            dlplugin "$i"
+        done
+        return 0
+    fi
+
+    # install list of plugins from mpmfile
+    if [ "$1" = "-f" ]; then
+        if [ -e "mpmfile" ]; then
+            while read p; do
+                dlplugin "$p"
+                echo "$p"
+            done <mpmfile
+        else
+            echo "put your plugin names in an mpmfile"
+        fi
+        return 0
+    fi
+
+    # execute from either plugins or spigot dir
+    if ! [ "${PWD#**/}" = "plugins" ]; then
+        NOCD="set"
+        [ -e plugins ] || mkdir plugins
+        cd plugins
+    fi
+
+    [ -e "$1".jar ] && echo "plugin already existing" && return
+
+    curl -s "$RAW/plugins/$1/$MC/$1.mpm" >"$1.mpm"
+    if ! grep -q 'describe: ' "$1.mpm"; then
+        rm $1.mpm
+        echo "$1 is not a valid plugin"
+        return 1
+    fi
+
+    # download actual plugin
+    wget -q "$RAW/plugins/$1/$MC/$1.jar"
+
+    if grep -q 'depend' "$1.mpm"; then
+        echo "installing plugin $1 dependencies"
+        DPENDENCIES="$(grep 'depend' $1.mpm)"
+        for i in "$DPENDENCIES"; do
+            dlplugin "${i#**:}"
+        done
+    fi
+
+    # some plugins execute shell scripts after installing
+    if grep -q 'hook' <"$1.mpm"; then
+        pushd .
+        echo "running plugin hooks"
+        source <(curl -s "$RAW/plugins/$1/$MCVERSION/hook.sh")
+        minehook
+        popd
+    fi
+
+    if [ -n "$NOCD" ]; then
+        cd ..
+    fi
+}
