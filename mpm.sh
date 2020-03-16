@@ -162,7 +162,7 @@ dlplugin() {
     fi
 }
 
-# TODO: 
+# TODO:
 
 # remove the last n lines from file
 rmlast() {
@@ -186,7 +186,6 @@ app() {
         echo "file $APPENDFILE not found"
     fi
 }
-
 
 #usage: mineuuid {playername}
 # returns the mojang uuid fromt the username
@@ -248,3 +247,31 @@ mcop() {
     app "]"
     app ""
 }
+
+USAGE="usage: mpm //todo"
+
+if [ -z "$1" ]; then
+    echo "$USAGE"
+    exit
+else
+    ACTION="$1"
+    shift 1
+fi
+
+case "$ACTION" in
+dl)
+    dlplugin $@
+    ;;
+spigot)
+    spigotdl $@
+    ;;
+exe)
+    spigexe $@
+    ;;
+op)
+    mcop $@
+    ;;
+*)
+    echo "$USAGE"
+    ;;
+esac
