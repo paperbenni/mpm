@@ -286,6 +286,9 @@ op)
 tunnel)
     spigotserveo
     ;;
+install)
+    dlplugin -f
+    ;;
 *)
     echo "$USAGE"
     ;;
