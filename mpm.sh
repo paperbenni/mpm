@@ -38,11 +38,14 @@ spigotdl() {
     wget -q "$RAW/spigot/$MC/spigot.jar"
     [ -e server-icon.png ] || wget -O server-icon.png -q "$RAW/paperbenni64.png"
     [ -e eula.txt ] || echo "eula=true" >eula.txt
+    getmpm server.properties
+    ls *.html &>/dev/null && rm *.html
+}
+
+lightconf() {
     getmpm bukkit.yml
     getmpm paper.yml
     getmpm spigot.yml
-    getmpm server.properties
-    ls *.html &>/dev/null && rm *.html
 }
 
 #jar opener with settings
