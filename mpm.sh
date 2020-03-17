@@ -174,7 +174,14 @@ dlplugin() {
     fi
 }
 
-# TODO:
+pluginfo() {
+    PLUGTEXT="$(curl -s $RAW/plugins/$1/$MC/$1.mpm)"
+    if grep -q 'describe:' <<<"$PLUGTEXT"; then
+        echo "$PLUGTEXT"
+    fi
+}
+
+# TODO: updater
 
 # remove the last n lines from file
 rmlast() {
@@ -227,13 +234,14 @@ mcop() {
     [ -e ops.json ] && touch ops.json
     [ -z "$1" ] && echo "usage: mcop username" && return
 
-    if grep -q 'online-mode=true' <server.properties; then
+    if [ -e server.properties ] &&
+        grep -q 'online-mode=true' server.properties; then
         UUID=$(mineuuid "$1")
     else
         UUID=$(mineuuid "$1" offline)
     fi
 
-    if grep -q "$UUID" <ops.json; then
+    if grep -q "$UUID" ops.json; then
         echo "already op"
         return 0
     fi
@@ -286,6 +294,9 @@ tunnel)
     ;;
 install)
     dlplugin -f
+    ;;
+info)
+    pluginfo "$1"
     ;;
 *)
     echo "$USAGE"
