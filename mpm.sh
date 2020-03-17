@@ -227,8 +227,6 @@ mcop() {
     [ -e ops.json ] && touch ops.json
     [ -z "$1" ] && echo "usage: mcop username" && return
 
-    pb replace
-
     if grep -q 'online-mode=true' <server.properties; then
         UUID=$(mineuuid "$1")
     else
