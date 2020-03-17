@@ -2,7 +2,7 @@
 <div align="center">
     <h1>mpm</h1>
     <p>The Missing Package Manager for Minecraft</p>
-    <img width="300" height="300" src="https://raw.githubusercontent.com/paperbenni/mpm/master/logo/logo.png">
+    <img width="300" src="https://raw.githubusercontent.com/paperbenni/mpm/master/logo/logo.png">
 </div>
 
 # mpm
