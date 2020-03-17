@@ -148,6 +148,7 @@ dlplugin() {
     fi
 
     # download actual plugin
+    echo "installing plugin $1"
     wget -q "$RAW/plugins/$1/$MC/$1.jar"
     # commit needed for updating
     echo commit: $(lastcommit "plugins/$1/$MC/$1.jar") >>$1.mpm
@@ -155,8 +156,7 @@ dlplugin() {
     if grep -q 'hook' <"$1.mpm"; then
         pushd .
         echo "running plugin hooks"
-        source <(curl -s "$RAW/plugins/$1/$MCVERSION/hook.sh")
-        minehook
+        curl -s "$RAW/plugins/$1/$MC/hook.sh" | bash
         popd
     fi
 
@@ -282,6 +282,9 @@ start)
     ;;
 op)
     mcop $@
+    ;;
+tunnel)
+    spigotserveo
     ;;
 *)
     echo "$USAGE"
