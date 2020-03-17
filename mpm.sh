@@ -195,20 +195,6 @@ rmlast() {
     done
 }
 
-# appends to previously set APPENDFILE
-app() {
-    if [ -z "$APPENDFILE" ]; then
-        echo "append to a \$APPENDFILE"
-        echo "usage: app string"
-        return 1
-    fi
-    if [ -e "$APPENDFILE" ]; then
-        echo "$1" >>"$APPENDFILE"
-    else
-        echo "file $APPENDFILE not found"
-    fi
-}
-
 #usage: mineuuid {playername}
 # returns the mojang uuid fromt the username
 mineuuid() {
@@ -249,24 +235,23 @@ mcop() {
         return 0
     fi
 
-    APPENDFILE=$(realpath ops.json)
     if grep -q 'uuid' <ops.json; then
         rmlast ops.json 3
-        app "  },"
+        echo "  }," >>ops.json
     else
         rm ops.json
         touch ops.json
-        app "["
+        echo "[" >>ops.json
     fi
 
-    app "  {"
-    app "    \"uuid\": \"$UUID\", "
-    app "    \"name\": \"$1\", "
-    app "    \"level\": 4, "
-    app "    \"bypassesPlayerLimit\": false"
-    app "  }"
-    app "]"
-    app ""
+    echo "  {" >>ops.json
+    echo "    \"uuid\": \"$UUID\", " >>ops.json
+    echo "    \"name\": \"$1\", " >>ops.json
+    echo "    \"level\": 4, " >>ops.json
+    echo "    \"bypassesPlayerLimit\": false" >>ops.json
+    echo "  }" >>ops.json
+    echo "]" >>ops.json
+    echo "" >>ops.json
 }
 
 USAGE="usage: mpm //todo"
