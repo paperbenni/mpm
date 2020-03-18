@@ -14,6 +14,8 @@ curl -Ls https://git.io/JvXZm | bash
 ```
 Works on Linux and Mac. If you use Windows you are probably more comfortable with hunting down files on the web. 
 
+dependencies to take full advantage of mpm: bash, wget, curl, java and autossh
+
 ## Usage
 mpm has several subcommands
 

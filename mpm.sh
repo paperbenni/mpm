@@ -154,7 +154,9 @@ dlplugin() {
     echo "installing plugin $1"
     wget -q "$RAW/plugins/$1/$MC/$1.jar"
     # commit needed for updating
-    echo commit: $(lastcommit "plugins/$1/$MC/$1.jar") >>$1.mpm
+    if grep -q 'github' <<<"$RAW"; then
+        echo commit: $(lastcommit "plugins/$1/$MC/$1.jar") >>$1.mpm
+    fi
     # some plugins execute shell scripts after installing
     if grep -q 'hook' <"$1.mpm"; then
         pushd .
@@ -177,6 +179,7 @@ dlplugin() {
     fi
 }
 
+# display .mpm file of plugin
 pluginfo() {
     PLUGTEXT="$(curl -s $RAW/plugins/$1/$MC/$1.mpm)"
     if grep -q 'describe:' <<<"$PLUGTEXT"; then
