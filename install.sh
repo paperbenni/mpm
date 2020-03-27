@@ -1,4 +1,12 @@
 #!/bin/bash
+
+# fake sudo
+if ! command -v sudo &>/dev/null; then
+    sudo() {
+        $@
+    }
+fi
+
 if [ -z "$1" ]; then
     echo "installing mpm"
     if ! [ -e ./mpm.sh ]; then

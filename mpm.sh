@@ -96,7 +96,12 @@ spigexe() {
 
 # establish a tcp tunnel
 spigotserveo() {
-    nohup autossh -o StrictHostKeyChecking=no -p 2222 -M 0 -R "${1:-0}":localhost:25565 paperbenni.mooo.com
+    if [ "$1" = "-o" ]; then
+        shift 1
+        autossh -o StrictHostKeyChecking=no -p 2222 -M 0 -R "${1:-0}":localhost:25565 paperbenni.mooo.com
+    else
+        nohup autossh -o StrictHostKeyChecking=no -p 2222 -M 0 -R "${1:-0}":localhost:25565 paperbenni.mooo.com
+    fi
 }
 
 # gets the hash of the last commit
